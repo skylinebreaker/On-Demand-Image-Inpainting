@@ -19,15 +19,15 @@ In our project, we implement deep learning models to conduct specific image rest
 
 In this project, we handle image inpainting using two different deep learning models: CNN and GAN.
 
-Most CNN models are similar with an encoder-decoder structure as follows. Encoder extracts the features from original images while decoder reconstructs images based on the features extracted. Usually, a **_channel-wise fully connected layer_**, instead of fully connected layer, will connect encoder and decoder, to reduce number of parameters hence the computation and cost.
+Most CNN models are similar with an encoder-decoder structure as follows. Encoder extracts the features from original images while decoder reconstructs images based on the features extracted. Usually, a **_channel-wise fully connected layer_** [[1]](http://people.eecs.berkeley.edu/~pathak/context_encoder/), instead of fully connected layer, will connect encoder and decoder, to reduce number of parameters hence the computation and cost.
 
 <p align="center">
   <img width = "600" src ="https://github.com/skylinebreaker/On-Demand-Image-Inpainting/blob/master/images/encoder-decoder.png"/>
 </p>
 
-Originally, image inpainting focuses on images with central missing part of fixed size, which rarely occurs actually. Images can be covered by a mask of arbitrary size or location. In order to consider all possible situation instead of specific difficulty level, on-demand learning method [2] has been proposed to dynamically adjust its focus when needed. Initially, each task is divided into N sub-tasks of increasing difficulty and trained jointly to accommodate all N subtasks. As more difficult subtasks require more training, number of training examples for subtasks will be updated based on PSNR (Peak Signal-to-Noise Ratio), a number to illustrate the correctness of prediction image. A lower PSNR indicates a difficult task (large size of missing), and needs more training samples. 
+Originally, image inpainting focuses on images with central missing part of fixed size, which rarely occurs actually. Images can be covered by a mask of arbitrary size or location. In order to consider all possible situation instead of specific difficulty level, **_on-demand learning method_** [[2]](http://vision.cs.utexas.edu/projects/on_demand_learning/) has been proposed to dynamically adjust its focus when needed. Initially, each task is divided into N sub-tasks of increasing difficulty and trained jointly to accommodate all N subtasks. As more difficult subtasks require more training, number of training examples for subtasks will be updated based on **_PSNR_** (Peak Signal-to-Noise Ratio), a number to illustrate the correctness of prediction image. A lower PSNR indicates a difficult task (large size of missing), and needs more training samples. 
 
-Assuming the Batch size as B, average PSNR for subtask i as Pi, we can get the number of samples for subtask i Bi using the following equation.
+Assuming the Batch size as B, average PSNR for subtask (i) as Pi, we can get the number of samples for subtask (i) Bi using the following equation.
 
 <p align="center">
   <img width = "200" src ="https://github.com/skylinebreaker/On-Demand-Image-Inpainting/blob/master/images/O-D-eq.png"/>
@@ -35,7 +35,7 @@ Assuming the Batch size as B, average PSNR for subtask i as Pi, we can get the n
 
 For GAN, there are quite different methods. Context encoder applies adversarial loss associated with original L2 loss to enhance the quality of results. Image restoration is also an image-image translation task. Given imperfect images, we wish to reconstruct the images without knowing what’s missing. 
 
-Conditional GAN [3] provides a universal approach when dealing with image-image translation. Inputs to the Conditional GAN are actual images instead of noise in original GAN paper [5]. Also, U-Net [34] used in generator can provide quite clear images and Patch GAN for discriminator penalizes structure at the scale of image patches. Conditional GAN add L1 loss to the generator loss function to get close to the ground truth image.
+_**Conditional GAN**_ [[3]](https://github.com/phillipi/pix2pix) provides a universal approach when dealing with image-image translation. Inputs to the Conditional GAN are actual images instead of noise in original _**GAN paper**_ [[4]](https://arxiv.org/pdf/1406.2661.pdf). Also, _**U-Net**_ [[5]](https://arxiv.org/pdf/1505.04597.pdf) used in generator can provide quite clear images and _**Patch GAN**_ [[6]](https://github.com/chuanli11/MGANs)for discriminator penalizes structure at the scale of image patches. Conditional GAN add L1 loss to the generator loss function to get close to the ground truth image.
 
 <p align="center">
   <img width = "400" src ="https://github.com/skylinebreaker/On-Demand-Image-Inpainting/blob/master/images/L1-GAN_Eq.png"/>
@@ -48,7 +48,7 @@ As mentioned before, this project implements two different deep learning models 
 
 ### data preprocessing
 
-Dataset used in this project is [_**CelebA**_] (http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html), which includes 202,599 human face images (jpg). Several tools and libraries are needed to preprocessing jpg files downloaded from google drive (https://drive.google.com/drive/folders/0B7EVK8r0v71pWEZsZE9oNnFzTm8). First, Image from PIL can transform jpg images into numpy arrays, which can be directly used later. Second, misc from scipy can resize the original images into given size. Here, images’ size is 128 * 128 facilitating computation during model formation. Third, how to push all data into training model? It would be memory error as well as if all the data processed concurrently. The solution is to handle data in batches when needed. Besides, pickle all the paths of images and get data through the paths when needed. For the full implementation, refer to datapreprocessing.py ().
+Dataset used in this project is [_**CelebA**_](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html), which includes 202,599 human face images (jpg). Several tools and libraries are needed to preprocessing jpg files downloaded from [_google drive_](https://drive.google.com/drive/folders/0B7EVK8r0v71pWEZsZE9oNnFzTm8). First, Image from PIL can transform jpg images into numpy arrays, which can be directly used later. Second, misc from scipy can resize the original images into given size. Here, images’ size is 128 * 128 facilitating computation during model formation. Third, how to push all data into training model? It would be memory error as well as if all the data processed concurrently. The solution is to handle data in batches when needed. Besides, pickle all the paths of images and get data through the paths when needed. For the full implementation, refer to datapreprocessing.py ().
 
 ### CNN model implementation
 
@@ -86,8 +86,14 @@ Following the same rule of CNN model, we also implement on-demand learning metho
 We set 90 as batch size, 20 epochs for training, 5 difficulty levels, 98-1-1 train-valid-test division. 
 
 ### Our trials
-Besides the traditional Conditional GAN method, we try to change generator loss function. Originally loss function contains a L1 term to illustrate L1 distance between the real and fake images, which speeds up the training process to converge to the more real images. We change a little bit, adding one more term to penalize more on the missing part of GAN.
+Besides the traditional Conditional GAN method, we try to change generator loss function. Originally loss function contains a L1 term to illustrate L1 distance between the real and fake images, which speeds up the training process to converge to the more real images. We change a little bit, adding one more term to penalize more on the missing part of GAN. The new term include all pixels that are far from the real images. Once generated image is quite close to real one, the missing region should acquire more attention, thus more weight in that case.
 
+```python
+self.l1_weight_crop = 13. / gen_all_loss_L1
+gen_crop_diff_L1 = tf.nn.relu(gen_all_diff_L1 - 0.1)
+gen_crop_diff_L1 = tf.reduce_mean(gen_crop_diff_L1)
+self.gen_loss_op = gen_loss_GAN * self.gan_weight + gen_all_loss_L1 * self.l1_weight + gen_crop_diff_L1 * self.l1_weight_crop
+```
 ## Project results
 We implement all the models on Google Cloud Platform and almost run out of all the free credits ($600) of two accounts.
 
@@ -128,3 +134,16 @@ Both of our trials fail and that won’t stop me. For the future work, we wish t
 
 To conclude, this project focuses on image inpainting with the help of deep learning. First, we implement a convolutional neural network with on-demand learning method. Results verify the advantages of on-demand learning over fixated models. Second, we try to apply conditional GAN with on-demand learning and receive acceptable but not ideal results. Besides, we propose some potential optimization methods. Despite failure in the end, we still pursue new possible approach to improve the GAN results.
 
+## Reference
+
+[1] _"Context Encoders: Feature Learning by Inpainting", [pdf](https://arxiv.org/pdf/1604.07379.pdf)_ . 
+
+[2] _"On-Demand Learning for Deep Image Restoration", [pdf](http://vision.cs.utexas.edu/projects/on_demand_learning/gao-iccv2017.pdf)_ . 
+
+[3] _"Image-to-Image Translation with Conditional Adversarial Networks", [pdf](https://arxiv.org/pdf/1611.07004v1.pdf)_ . 
+
+[4] _"Generative Adversarial Nets", [pdf](https://arxiv.org/pdf/1406.2661.pdf)_ . 
+
+[5] _"U-Net: Convolutional Networks for Biomedical Image Segmentation", [pdf](https://arxiv.org/pdf/1505.04597.pdf)_ . 
+
+[6] _"Precomputed Real-Time Texture Synthesis with Markovian Generative Adversarial Networks", [pdf](https://arxiv.org/pdf/1604.04382.pdf)_ . 
