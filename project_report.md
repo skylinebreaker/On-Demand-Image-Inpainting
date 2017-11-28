@@ -128,6 +128,10 @@ Our very first trial is to remove U-Net. In U-Net structure, the first image, co
 
 For another trial, we keep the U-Net and try to modify the loss function for generator as mentioned before. For the early epochs, the modification achieves less loss and higher PSNR. However, as time goes, the modification becomes the same or even worse than traditional conditional GAN. This can be explained that the purpose of GAN is just to let the model to decide the best performed loss function without human intervention. Adding new term to generator loss function would cause additional burden to GAN, thus harming the performance in the long term.
 
+<p align="center">
+  <img width = "500" src ="https://github.com/skylinebreaker/On-Demand-Image-Inpainting/blob/master/images/my_try.png"/>
+</p>
+
 Both of our trials fail and that won’t stop me. For the future work, we wish to update the loss function for discriminator. The task here actually differs from original purpose of conditional GAN. We don’t need to worry about the input X here. We should pay more attention to the missing part. We still thinking about any potential optimization that could work indeed.
 
 ## Summary
