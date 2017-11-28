@@ -53,7 +53,7 @@ We set 90 as batch size, 15 epochs for training, 5 difficulty levels, 98-1-1 tra
 Conditional GAN originally works on image-to-image translation, like image colorization or …But here, we focus on image inpainting using conditional GAN. The generator consists of seven encoders and seven decoders. Just like CNN model, both encoder and decoder are composed of convolutional layer, batch normalization layer, and relu layer. The difference lies on symmetric skip connections in conditional GAN. For instance, the last layer takes the output of the first layer as input as well as its previous layer. By skipping middle layers, many details of original images are shared in the very last layer, thus generating high resolution images. We can see the difference from the following figure. The discriminator uses Patch-GAN which only penalizes structures at the scale of patches. Each N*N patch is classified as real or fake across the image, giving the sense of texture or style loss.
 
 <p align="center">
-  <img src ="https://github.com/skylinebreaker/On-Demand-Image-Inpainting/blob/master/images/U-Net.png"/>
+  <img width="400" src ="https://github.com/skylinebreaker/On-Demand-Image-Inpainting/blob/master/images/U-Net.png"/>
 </p>
 
 Following the same rule of CNN model, we add on-demand learning method to conditional GAN, making the model tolerable for any level of difficulty.
